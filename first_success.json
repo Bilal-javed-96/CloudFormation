@@ -1,0 +1,183 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description" : "Bilal first template",
+  
+  "Parameters":{
+      "VPCName":{
+          "Type": "String",
+          "Default":"bilal-vpc",
+          "Description":"choose a valid vpc name"
+      }
+  
+  },
+  
+  
+  "Resources":{
+      "VPC1":{
+          "Type" : "AWS::EC2::VPC",
+          "Properties" : {
+              "CidrBlock" : "10.0.0.0/16",
+              "EnableDnsHostnames" : "true",
+              "EnableDnsSupport" : "true",
+              "InstanceTenancy" : "default",
+              "Tags" : [ 
+                  {"Key":"Name",
+                  "Value": {"Ref":"VPCName"}
+                   } ]
+            }
+  
+        },
+  
+      "SubnetPublic1":{
+          "Type" : "AWS::EC2::Subnet",
+          "Properties" : {
+              
+              "AvailabilityZone" : "us-east-1a",
+              "CidrBlock" : "10.0.1.0/24",
+              "Tags" : [ {"Key":"Name","Value":"bilal-pub-1"} ],
+              "VpcId" : {"Ref":"VPC1"}
+            }
+  
+      },
+  
+      "SubnetPublic2":{
+          "Type" : "AWS::EC2::Subnet",
+          "Properties" : {
+              
+              "AvailabilityZone" : "us-east-1b",
+              "CidrBlock" : "10.0.2.0/24",
+              "Tags" : [ {"Key":"Name","Value":"bilal-pub-2"} ],
+              "VpcId" : {"Ref":"VPC1"}
+            }
+  
+          },
+          
+      "SubnetPrivate1":{
+              "Type" : "AWS::EC2::Subnet",
+              "Properties" : {
+                  
+                  "AvailabilityZone" : "us-east-1c",
+                  "CidrBlock" : "10.0.3.0/24",
+                  "Tags" : [ {"Key":"Name","Value":"bilal-pri-1"} ],
+                  "VpcId" : {"Ref":"VPC1"}
+                }
+      
+              },
+  
+      "SubnetPrivate2":{
+              "Type" : "AWS::EC2::Subnet",
+              "Properties" : {
+                  
+                  "AvailabilityZone" : "us-east-1d",
+                  "CidrBlock" : "10.0.4.0/24",
+                  "Tags" : [ {"Key":"Name","Value":"bilal-pri-2"} ],
+                  "VpcId" : {"Ref":"VPC1"}
+                }
+      
+              },
+  
+      "RouteTablePublic":{
+          "Type" : "AWS::EC2::RouteTable",
+          "Properties" : {
+  
+              "Tags" : [ {"Key":"Name","Value":"bilal-pub-rt"}],
+              "VpcId" : {"Ref":"VPC1"}
+          
+          }
+  
+        },
+  
+      "RouteTablePrivate":{
+          "Type" : "AWS::EC2::RouteTable",
+          "Properties" : {
+              "Tags" : [ {"Key":"Name","Value":"bilal-pri-rt"}],
+              "VpcId" : {"Ref":"VPC1"}
+            }
+  
+        },
+  
+      "VPC1IGW":{
+          "Type" : "AWS::EC2::InternetGateway",
+          "Properties" : {
+              "Tags" : [ {"Key":"Name","Value":"bilal-IGW"} ]
+            }
+  
+        },
+  
+      "VPC1NGW":{
+          "Type" : "AWS::EC2::NatGateway",
+          "Properties" : {
+              "AllocationId" : "eipalloc-0aacfc2d62e8b5583",
+              "SubnetId" : {"Ref":"SubnetPublic1"},
+              "Tags" : [ {"Key":"Name","Value":"bilal-NGW"} ]
+            }
+        },
+  
+      "VpcIgwAttach":{
+          "Type" : "AWS::EC2::VPCGatewayAttachment",
+          "Properties" : {
+              "InternetGatewayId" : {"Ref":"VPC1IGW"},
+              "VpcId" : {"Ref":"VPC1"}
+              }
+  
+        },
+  
+      "RouteTablePublicAssociation" : {
+          "Type" : "AWS::EC2::SubnetRouteTableAssociation",
+          "Properties" : {
+             "SubnetId" : { "Ref" : "SubnetPublic1" },
+             "RouteTableId" : { "Ref" : "RouteTablePublic" }
+          }
+  
+       },
+  
+      "RouteTablePublicAssociation1" : {
+          "Type" : "AWS::EC2::SubnetRouteTableAssociation",
+          "Properties" : {
+             "SubnetId" : { "Ref" : "SubnetPublic2" },
+             "RouteTableId" : { "Ref" : "RouteTablePublic" }
+          }
+  
+       },
+  
+      "RouteTablePrivateAssociation" : {
+          "Type" : "AWS::EC2::SubnetRouteTableAssociation",
+          "Properties" : {
+             "SubnetId" : { "Ref" : "SubnetPrivate1" },
+             "RouteTableId" : { "Ref" : "RouteTablePrivate" }
+          }
+  
+       },
+  
+      "RouteTablePrivateAssociation1" : {
+          "Type" : "AWS::EC2::SubnetRouteTableAssociation",
+          "Properties" : {
+             "SubnetId" : { "Ref" : "SubnetPrivate2" },
+             "RouteTableId" : { "Ref" : "RouteTablePrivate" }
+          }
+  
+       },
+  
+      "Route1":{
+          "Type" : "AWS::EC2::Route",
+          "Properties" : {
+              "DestinationCidrBlock" : "0.0.0.0/0",
+              "GatewayId" : {"Ref":"VPC1IGW"},
+              "RouteTableId" : {"Ref":"RouteTablePublic"}
+            }
+        },
+  
+        "Route2":{
+            "Type" : "AWS::EC2::Route",
+            "Properties" : {
+                "DestinationCidrBlock" : "0.0.0.0/0",
+                "NatGatewayId" : {"Ref":"VPC1NGW"},
+                "RouteTableId" : {"Ref":"RouteTablePrivate"}
+              }
+          }
+          
+        
+  }
+  
+  }
+  
