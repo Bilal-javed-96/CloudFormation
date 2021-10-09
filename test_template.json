@@ -1,0 +1,159 @@
+{
+ "AWSTemplateFormatVersion": "2010-09-09",
+ "Description" : "CloudMasters first template",
+   
+ "Parameters":{
+
+    "vpcname":{
+          "Type" : "String",
+          "Default" : "bilal-parameter",
+          "Description" : "Enter your VPC name"
+        },
+    "subnetname":{
+        "Type" : "String",
+        "Default" : "subnet-1",
+        "AllowedValues" : ["subnet-1", "subnet-2", "subnet-3"],
+        "Description" : "Enter your subnet name"
+    },
+    "instype":{
+        "Type" : "String",
+        "Default" : "t2.micro",
+        "AllowedValues" : [ "t2.micro",
+                            "t2.small",
+                            "t2.medium",
+                            "t2.large",
+                            "t2.xlarge",
+                            "t2.2xlarge",
+                            "m3.medium"],
+        "Description" : "Select your EC2 Instance Type"
+    },
+    "imgid":{
+        "Type" : "String",
+        "Default" : "ami-02e136e904f3da870",
+        "AllowedValues" : [ "ami-00d1ab6b335f217cf",
+                            "ami-02e136e904f3da870",
+                            "ami-0ba6d33ccf9c1d893"
+                            ],
+        "Description" : "Select your EC2 Image"
+    },
+    "kname":{
+        "Type" : "String",
+        "Default" : "Key Name",
+        "Description" : "Enter your Key name"
+    }
+
+},
+
+ "Resources":{
+    "VPCA":{
+        "Type" : "AWS::EC2::VPC",
+        "Properties" : {
+            "CidrBlock" : "10.0.0.0/16",
+            "Tags" : [ {"Key":"Name" , "Value" : {"Ref":"vpcname"}}]
+          }
+    },
+    "sub1":{
+        "Type" : "AWS::EC2::Subnet",
+        "Properties" : {
+
+            "AvailabilityZone" : "us-east-1a",
+            "CidrBlock" :"10.0.1.0/24",
+            "MapPublicIpOnLaunch" : "True",
+            "Tags" : [ {"Key":"Name" , "Value" :{"Ref":"subnetname"}}],
+            "VpcId" : {"Ref":"VPCA"}
+        }
+    },
+    "sub2":{
+        "Type" : "AWS::EC2::Subnet",
+        "Properties" : {
+
+            "AvailabilityZone" : "us-east-1b",
+            "CidrBlock" :"10.0.2.0/24",
+            "Tags" : [ {"Key":"Name" , "Value" : "private-subnet1"}],
+            "VpcId" : {"Ref":"VPCA"}
+        }
+    },
+    "pubrt":{
+        "Type" : "AWS::EC2::RouteTable",
+        "Properties" : {
+            "Tags" : [ {"Key":"Name" , "Value" : "pub-routetable"} ],
+            "VpcId" : {"Ref":"VPCA"}
+        }
+    },
+    "prirt":{
+        "Type" : "AWS::EC2::RouteTable",
+        "Properties" : {
+            "Tags" : [ {"Key":"Name" , "Value" : "pri-routetable"} ],
+            "VpcId" : {"Ref":"VPCA"}
+        }
+    },
+    "igw":{
+        "Type" : "AWS::EC2::InternetGateway",
+        "Properties" : {
+            "Tags" : [ {"Key":"Name" , "Value" : "bilal-igw"}]
+        }
+    },
+    "igwattachment":{
+        "Type" : "AWS::EC2::VPCGatewayAttachment",
+        "Properties" : {
+            "InternetGatewayId" : {"Ref":"igw"},
+            "VpcId" : {"Ref":"VPCA"}
+        }
+    },
+    "pubroute":{
+        "Type" : "AWS::EC2::Route",
+        "Properties" : {
+            "DestinationCidrBlock" : "0.0.0.0/0",
+            "GatewayId" : {"Ref":"igw"},
+            "RouteTableId" : {"Ref":"pubrt"}
+
+        }
+    },
+    "pubsubasso":{
+        "Type" : "AWS::EC2::SubnetRouteTableAssociation",
+        "Properties" : {
+            "RouteTableId" : {"Ref":"pubrt"},
+            "SubnetId" : {"Ref":"sub1"}
+        }
+    },
+    "prisubasso":{
+        "Type" : "AWS::EC2::SubnetRouteTableAssociation",
+        "Properties" : {
+            "RouteTableId" : {"Ref":"prirt"},
+            "SubnetId" : {"Ref":"sub2"}
+        }
+    },
+    "ec2a":{
+        "Type" : "AWS::EC2::Instance",
+        "Properties" : {
+            "ImageId" : {"Ref":"imgid"},
+            "InstanceType" : {"Ref":"instype"},
+            "KeyName" : {"Ref":"kname"},
+            "SecurityGroupIds" : [ {"Ref":"ecsg"} ],
+            "SubnetId" : {"Ref":"sub1"},
+            "Tags" : [ {"Key":"Name","Value":"bilal-ec2"}]
+        }
+    },
+    "ecsg":{
+        "Type" : "AWS::EC2::SecurityGroup",
+        "Properties" : {
+            "GroupDescription" : "Security Group for EC2",
+            "SecurityGroupEgress" : [{
+                "IpProtocol" : "-1",
+                "CidrIp" : "0.0.0.0/0"
+             }],
+            "SecurityGroupIngress" : [{
+                "IpProtocol" : "-1",
+                "CidrIp" : "0.0.0.0/0"
+             }],
+            "Tags" : [{"Key":"Name","Value":"bilal-sg"}],
+            "VpcId" : {"Ref":"VPCA"}
+          }
+      }
+      
+
+
+
+}
+
+}
